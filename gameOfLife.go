@@ -18,6 +18,7 @@ func NewUniverse() Universe {
 	for i := 0; i < len(a); i++ {
 		a[i] = make([]bool, width)
 	}
+
 	return a
 }
 
@@ -53,25 +54,10 @@ func (u Universe) Seed() {
 }
 
 func (u Universe) Alive(x, y int) bool {
-	if x < 0 {
-		x = width - 1
-	} else if x > width-1 {
-		x = 0
-	}
+	x = (x + width) % width
+	y = (y + height) % height
 
-	if y < 0 {
-		y = height - 1
-	} else if y > height-1 {
-		y = 0
-	}
-
-	if u[y][x] == true {
-		// fmt.Printf("x=%v, max(x)=%v, y=%v, max(y)=%v\ncell status: alive\n", x, width, y, height)
-		return true
-	} else {
-		// fmt.Printf("x=%v, max(x)=%v, y=%v, max(y)=%v\ncell status: dead\n", x, width, y, height)
-		return false
-	}
+	return u[y][x]
 }
 
 func (u Universe) Neighbours(x, y int) int {
@@ -90,22 +76,22 @@ func (u Universe) Neighbours(x, y int) int {
 		x++
 		y -= 3
 	}
-	// fmt.Printf("Liczba żywych: %v\n", cnt)
+
 	return cnt
 }
 
 func (u Universe) Next(x, y int) bool {
-	var out bool
-	if (u.Alive(x, y) == true) && u.Neighbours(x, y) < 2 {
-		out = false
-	} else if (u.Alive(x, y) == true) && (u.Neighbours(x, y) >= 2) && (u.Neighbours(x, y) < 4) {
-		out = true
-	} else if (u.Alive(x, y) == true) && u.Neighbours(x, y) > 3 {
-		out = false
-	} else if (u.Alive(x, y) == false) && (u.Neighbours(x, y) == 3) {
-		out = true
+	alive := u.Alive(x, y)
+	neighbours := u.Neighbours(x, y)
+	if alive && (neighbours < 2) {
+		return false
+	} else if alive && (neighbours > 3) {
+		return false
+	} else if neighbours == 3 {
+		return true
 	}
-	return out
+
+	return alive
 }
 
 func Step(a, b Universe) {
@@ -114,7 +100,6 @@ func Step(a, b Universe) {
 			b[i][j] = a.Next(i, j)
 		}
 	}
-	a, b = b, a
 }
 
 func main() {
@@ -122,9 +107,9 @@ func main() {
 	univb := NewUniverse()
 	univ.Seed()
 	for i := 0; i < 10; i++ {
-		fmt.Print("\x0c")
-		time.Sleep(3 * time.Second)
+		time.Sleep(1 * time.Second)
 		univ.Show()
 		Step(univ, univb)
+		univ, univb = univb, univ
 	}
 }
